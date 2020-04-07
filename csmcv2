@@ -1,0 +1,64 @@
+#include <pthread.h>
+
+int students, tutors, chairs, help = 0;
+
+void* coordinatorThread(){
+  // waits for student
+  // if students arrives
+    // checks if any chairs are empty
+    // if any chairs are empty
+      // assign seat to student (shift based on priority?)
+    // if no chairs are empty
+      // shoo the poor student
+}
+
+void* studentThread(void *parameter){
+  // help = numHelp? needs to be permanent
+  
+  // arrives
+  
+  // checks if chair is empty
+  
+  // if empty sit and wait for coordinator
+    // gets tutored
+    // go back to programming
+    // subtract help by 1;
+  
+  // else if chair is not empty,
+    // go back to programming and come back later
+
+}
+
+void* tutorThread(void *parameter){
+  // waits for coordinator
+  
+  // if coordinator wakes me up
+    // take highest priority student
+    
+}
+                       
+int main(int argc, char *argv[]){
+// csmc #students #tutors #chairs #help 
+  
+  // Convert and store arguments into corresponding variables
+  int numStudents = atoi(argv[1]);
+  int numTutors = atoi(argv[2]);
+  int numChairs = atoi(argv[3]);
+  int numHelp = atoi(argv[4]);
+  
+  
+  // Create threads 
+  pthread_t coordinatorThreads;
+  pthread_t studentThreads[numStudents];
+  pthread_t tutorThreads[numTutors];
+  
+  int i;
+  for(i = 0; i < numStudents; i++){
+    pthread_create(&studentThreads[i], NULL, studentThread,  (void*) &studentThreads[i]);
+  }
+
+  for(i = 0; i < numTutors; i++){
+    pthread_create(&tutorThreads[i], NULL, tutorThread,  (void*) &tutorThreads[i]);
+  }
+  
+}
