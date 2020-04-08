@@ -1,10 +1,19 @@
 #include <pthread.h>
+#include <semaphore.h>
 
-int students, tutors, chairs, help = 0;
+
+int maxFiller = 10000;
+
+int numStudents, numTutors, numChairs, numHelp, currentChairs = 0;
+
+int chairs[maxFiller];
+
+sem_t studentAtChair;
 
 void* coordinatorThread(){
   // waits for student
   // if students arrives
+  sem_wait(&studentAtChair);
     // checks if any chairs are empty
     // if any chairs are empty
       // assign seat to student (shift based on priority?)
@@ -13,44 +22,58 @@ void* coordinatorThread(){
 }
 
 void* studentThread(void *parameter){
+
   // help = numHelp? needs to be permanent
-  
   // arrives
-  
   // checks if chair is empty
-  
   // if empty sit and wait for coordinator
     // gets tutored
     // go back to programming
     // subtract help by 1;
+  int i = 0;
+  for(; i < numChairs; i++){
+    if(chairs[i] == NULL){
+        //notify administrator
+        sem_post(&studentAtChair);
+        
+    }
+      // else if chair is not empty,
+    else{
+       // go back to programming and come back later
+    }
+  }
   
   // else if chair is not empty,
     // go back to programming and come back later
-
 }
 
 void* tutorThread(void *parameter){
-  // waits for coordinator
-  
+ // waits for coordinator
+
   // if coordinator wakes me up
     // take highest priority student
-    
 }
-                       
+
 int main(int argc, char *argv[]){
+
 // csmc #students #tutors #chairs #help 
+ 
+ // Convert and store arguments into corresponding variables
+  numStudents = atoi(argv[1]);
+  numTutors = atoi(argv[2]);
+  numChairs = atoi(argv[3]);
+  numHelp = atoi(argv[4]);
   
-  // Convert and store arguments into corresponding variables
-  int numStudents = atoi(argv[1]);
-  int numTutors = atoi(argv[2]);
-  int numChairs = atoi(argv[3]);
-  int numHelp = atoi(argv[4]);
+  currentChairs = numChairs;
   
+  // Create Data Structures
   
+  ;
   // Create threads 
   pthread_t coordinatorThreads;
   pthread_t studentThreads[numStudents];
   pthread_t tutorThreads[numTutors];
+  
   
   int i;
   for(i = 0; i < numStudents; i++){
@@ -60,5 +83,4 @@ int main(int argc, char *argv[]){
   for(i = 0; i < numTutors; i++){
     pthread_create(&tutorThreads[i], NULL, tutorThread,  (void*) &tutorThreads[i]);
   }
-  
 }
