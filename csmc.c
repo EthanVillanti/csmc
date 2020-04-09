@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h> 
-#include <unist.h>
+#include <unistd.h>
 #include <string.h>
 
 #include <pthread.h>
@@ -99,7 +99,7 @@ int main(int argc, const char * argv[]) {
     // need to create a new thread for every i (every student)
     studentIDArray[i] = i+1; // offset due to student 1 being at array[0]
     // create thread
-    assert(pthread_create(&students[i], NULL, student_thread, (void*) & studentIDArray[i]) == 0;
+    assert(pthread_create(&students[i], NULL, student_thread, (void*) & studentIDArray[i]) == 0);
     // assert() will do nothing if thread cannot be properly created (returns nonzero)
   }
   
@@ -120,7 +120,7 @@ int main(int argc, const char * argv[]) {
     pthread_join(students[i], NULL);
   }
   // tutor threads
-  for(i = 0; i < tutorNum, i++) { 
+  for(i = 0; i < tutorNum; i++) { 
     pthread_join(tutors[i] ,NULL);
   }
   // single coordinator thread
@@ -161,7 +161,7 @@ void *student_thread(void *studentID) {
     // lock seat and try again
     pthread_mutex_lock(&seatLock);
     // check if empty chair 
-    if(occupiedChairNumber >= chairNum) { 
+    if(occupiedChairNum >= chairNum) { 
       // print unable to find chair
       printf("St: Student %d found no empty chair. Will try again later\n", myID);
       // unlock seat
@@ -187,7 +187,7 @@ void *student_thread(void *studentID) {
     while(readyTutorQueue[myID - 1] == -1); // wait until tutor[myid-1] is ready
     // after above line, student has been helped
     // last print from student thread
-    printf("St: Student %d received help from Tutor %d.\n" myID, readyTutorQueue[myID - 1] - studentNum);
+    printf("St: Student %d received help from Tutor %d.\n", myID, readyTutorQueue[myID - 1] - studentNum);
     
     
     // student thread operations complete
@@ -213,7 +213,7 @@ void *student_thread(void *studentID) {
 // tutor
 // after tutor, communicate to student (and coordinator?) that tutoring is complete 
 void *tutor_thread(void *tutorID) { 
-  int myTID = *(int*)tutorID_; // tutor id
+  int myTID = *(int*)tutorID; // tutor id
   int studentOrdering; // if same # times tutored, first come first serve
   int studentVisits; // number of times student has been to csmc
   int mySID; // student id
@@ -242,7 +242,7 @@ void *tutor_thread(void *tutorID) {
     // first checks to see if pq has been changed from init value (-1)
     // second checks if pq is higher priority 
     studentVisits = pq[i][0]; 
-    studentOrder = pq[i][1];
+    studentOrdering = pq[i][1];
     mySID = studentIDArray[i]; // assign studend with highest priority to be tutored
     }
   }
@@ -282,9 +282,62 @@ void *tutor_thread(void *tutorID) {
   
   // let student know who tutor was for print statements inside of student thread
   pthread_mutex_lock(&readyTutorQueueLock);
-  tutorReadyQueue[mySID - 1] = myTID;
-  pthread_mutex_unlock(&tutorReadyQueueLock);
+  readyTutorQueue[mySID - 1] = myTID;
+  pthread_mutex_unlock(&readyTutorQueueLock);
   
   } // end of forever loop
 
 } // end of tutor thread
+
+// coordinator thread
+// wait until student needs help 
+// put student in appropriate position in queue
+// communicate to tutor
+void *coordinator_thread() { 
+
+  while(1) { 
+    // check for everyone being tutored
+    if(totalFinished == studentNum) { 
+      // terminate coordinator and tutor threads
+      // and exit
+      int i;
+      // terminating tutor threads
+      for(i = 0; 0 < tutorNum; i++) { 
+        sem_post(&sem_coordinator);
+      }
+      // terminate coordinator thread
+      pthread_exit(NULL); 
+    } 
+    // if here, still students to tutor
+    // wait until student requests help 
+    sem_wait(&sem_student);
+    
+    // lock seat before moving
+    pthread_mutex_lock(&seatLock);
+    int i;
+    for(i = 0; i < studentNum; i++) { 
+      if(newStudentQueue[i] > -1) { // changed from init
+        pq[i][0] = studentPriority[i]; // change priority
+        pq[i][1] = newStudentQueue[i]; // and put student to front
+        
+        // print statement
+        printf("Co: Student %d with priority %d in the queue. Waiting students now = %d. t Total requests = %d\n", studentIDArray[i], studentPriority[i], occupiedChairNum, totalRequests);
+        // back to init val
+        newStudentQueue[i] = -1;
+        
+        
+        // student in queue, assign tutor
+        sem_post(&sem_coordinator);
+      }
+    
+    }
+    // out of cs, unlock seats
+    pthread_mutex_unlock(&seatLock);
+
+  } // end of forever loop
+} // end of coordinator thread
+
+
+
+
+
